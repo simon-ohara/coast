@@ -7,7 +7,7 @@ INSTALL_PATH="${HOME}/bin"
 
 mkdir $INSTALL_PATH
 # check PATH for INSTALL_PATH?
+echo "export PATH=$INSTALL_PATH:$PATH" >> $HOME/.bash_profile
 export PATH="$INSTALL_PATH:$PATH"
-echo "PATH=$INSTALL_PATH:$PATH" >> $HOME/.bash_profile
 wget $SOURCE_URL --directory-prefix $INSTALL_PATH
 chmod +x $INSTALL_PATH/$NAME
