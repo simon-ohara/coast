@@ -2,7 +2,7 @@
 
 # check for docker?
 NAME="coast"
-SOURCE_URL="https://raw.github.com/simon-ohara/${NAME}/master/.gitconfig"
+SOURCE_URL="https://raw.github.com/simon-ohara/${NAME}/master/${NAME}"
 ROOT="/usr/local"
 INSTALL_PATH="${ROOT}/${NAME}/bin"
 BIN_PATH="${ROOT}/bin"
