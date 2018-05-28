@@ -1,0 +1,63 @@
+#!/bin/bash
+
+# CONFIG
+NAME=${PWD##*/}
+CONTAINER="${NAME}-container"
+IMAGE="${NAME}-image"
+MOUNT=$NAME
+
+function buildImage {
+  echo "You want coast to build"
+  docker build -t $IMAGE $PWD
+}
+
+function destroy {
+  echo "you want coast to destroy"
+  docker rm $CONTAINER
+  docker rmi $IMAGE
+}
+
+function bringContainerUp {
+  echo "you want coast to start"
+  # check for image? if not there buildImage first?
+  docker run -div $PWD:/$MOUNT --name $CONTAINER $IMAGE
+}
+
+function takeContainerDown {
+  echo "you want coast to stop"
+  docker stop $CONTAINER
+  docker rm $CONTAINER
+}
+
+function terminal {
+  echo "you want coast to term"
+  docker exec \
+    -e COLUMNS="`tput cols`" \
+    -e LINES="`tput lines`" \
+    -it $CONTAINER /bin/zsh
+}
+
+function usage {
+  echo "This is how to use coast"
+}
+
+case "$1" in
+  b|build)
+    buildImage
+    ;;
+  r|remove|destroy)
+    destroy
+    ;;
+  u|up|start)
+    bringContainerUp
+    ;;
+  d|down|stop)
+    takeContainerDown
+    ;;
+  o|t|open|term|terminal)
+    terminal
+    ;;
+  *)
+    usage
+    ;;
+esac
