@@ -10,3 +10,4 @@ mkdir $INSTALL_PATH
 export PATH="$INSTALL_PATH:$PATH"
 echo "PATH=$INSTALL_PATH:$PATH" >> $HOME/.bash_profile
 wget $SOURCE_URL --directory-prefix $INSTALL_PATH
+chmod +x $INSTALL_PATH/$NAME
