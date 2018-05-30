@@ -6,7 +6,7 @@ DOCKERFILE=$ROOT/Dockerfile.coast
 NAME=${PWD##*/}
 CONTAINER="${NAME}-container"
 IMAGE="${NAME}-image"
-MOUNT=$NAME
+MOUNT=/$NAME
 
 function checkForOutput {
   if [ -z $1 ]; then return 1; fi
@@ -86,7 +86,7 @@ function bringContainerUp {
 
   echo "Bringing up $CONTAINER"
   docker run --detach --interactive \
-    --volume $PWD:/$MOUNT \
+    --volume $PWD:$MOUNT \
     --name $CONTAINER $IMAGE
 }
 
@@ -119,10 +119,11 @@ function startSession {
   if [ "$1" = "from" ]; then buildImageWith $2; fi
   if ! containerIsRunning; then startContainer; fi
   echo "Starting a new session in $CONTAINER"
-  docker exec \
-    -e COLUMNS="`tput cols`" \
-    -e LINES="`tput lines`" \
-    -it $CONTAINER /bin/zsh
+  docker exec --interactive --tty \
+    --env COLUMNS="`tput cols`" \
+    --env LINES="`tput lines`" \
+    --workdir $MOUNT \
+    $CONTAINER /bin/zsh
 }
 
 function destructionUsage {
