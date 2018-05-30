@@ -1,6 +1,8 @@
 #!/bin/bash
 
 # CONFIG
+ROOT=$( cd ${BASH_SOURCE%/*} && pwd )
+DOCKERFILE=$ROOT/Dockerfile.coast
 NAME=${PWD##*/}
 CONTAINER="${NAME}-container"
 IMAGE="${NAME}-image"
@@ -48,7 +50,6 @@ function confirmDestruction {
 }
 
 function destroy {
-  # check for confirmation from user
   case "$1" in
     -f|--force)
       performDestruction
@@ -103,13 +104,36 @@ function stopContainer {
   docker stop $CONTAINER
 }
 
-function terminal {
+
+function startSession {
   if ! containerIsRunning; then startContainer; fi
   echo "Starting a new session in $CONTAINER"
   docker exec \
     -e COLUMNS="`tput cols`" \
     -e LINES="`tput lines`" \
     -it $CONTAINER /bin/zsh
+}
+
+function buildImageWith {
+  if imageExists; then
+    echo "$IMAGE already exists, destroy it before trying to build FROM $1"
+    exit 1
+  fi
+
+  echo "FROM $1" > $DOCKERFILE
+  docker build --tag $IMAGE - < $DOCKERFILE
+}
+
+function terminal {
+  case "$1" in
+    from)
+      buildImageWith $2
+      startSession
+      ;;
+    *)
+      startSession
+      ;;
+  esac
 }
 
 function destructionUsage {
@@ -134,7 +158,8 @@ case "$1" in
     stopContainer
     ;;
   o|t|open|term|terminal|session)
-    terminal
+    shift
+    terminal $@
     ;;
   *)
     usage
