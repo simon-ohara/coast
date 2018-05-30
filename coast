@@ -33,8 +33,36 @@ function buildImage {
   docker build --tag $IMAGE $PWD
 }
 
+function confirmDestruction {
+  echo -n "Are you sure you want to destroy $IMAGE and $CONTAINER? [(y)|n]:"
+  read confirmation
+  case "$confirmation" in
+    n|no|N|NO|No)
+      echo "Leaving $IMAGE and $CONTAINER as they were"
+      exit 1
+      ;;
+    *)
+      performDestruction
+      ;;
+  esac
+}
+
 function destroy {
   # check for confirmation from user
+  case "$1" in
+    -f|--force)
+      performDestruction
+      ;;
+    -h|--help)
+      destructionUsage
+      ;;
+    *)
+      confirmDestruction
+      ;;
+  esac
+}
+
+function performDestruction {
   if containerIsRunning; then stopContainer; fi
 
   if containerExists; then
@@ -84,6 +112,10 @@ function terminal {
     -it $CONTAINER /bin/zsh
 }
 
+function destructionUsage {
+  echo "This is how to use coast destroy"
+}
+
 function usage {
   echo "This is how to use coast"
 }
@@ -93,7 +125,7 @@ case "$1" in
     buildImage
     ;;
   r|remove|destroy)
-    destroy
+    destroy $2
     ;;
   u|up|start)
     startContainer
