@@ -137,7 +137,7 @@ function usage {
 function update {
   # Check against version?
   echo "Updating..."
-  $(wget -qO- https://raw.github.com/simon-ohara/coast/master/install | bash)
+  wget -qO- https://raw.github.com/simon-ohara/coast/master/install | bash
 }
 
 case "$1" in
