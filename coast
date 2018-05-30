@@ -6,31 +6,78 @@ CONTAINER="${NAME}-container"
 IMAGE="${NAME}-image"
 MOUNT=$NAME
 
+function checkForOutput {
+  if [ -z $1 ]; then return 1; fi
+  return 0
+}
+
+function imageExists {
+  checkForOutput $(docker images --quiet $IMAGE)
+  return $?
+}
+
+function containerExists {
+  checkForOutput $(docker ps --all --quiet --filter "name=$CONTAINER")
+  return $?
+}
+
+function containerIsRunning {
+  checkForOutput $(docker ps --quiet \
+    --filter "name=$CONTAINER" \
+    --filter "status=running")
+  return $?
+}
+
 function buildImage {
-  echo "You want coast to build"
-  docker build -t $IMAGE $PWD
+  echo "Building $IMAGE"
+  docker build --tag $IMAGE $PWD
 }
 
 function destroy {
-  echo "you want coast to destroy"
-  docker rm $CONTAINER
-  docker rmi $IMAGE
+  # check for confirmation from user
+  if containerIsRunning; then stopContainer; fi
+
+  if containerExists; then
+    echo "Removing $CONTAINER"
+    docker rm $CONTAINER
+  fi
+
+  if imageExists; then
+    echo "Removing $IMAGE"
+    docker rmi $IMAGE
+  fi
 }
 
 function bringContainerUp {
-  echo "you want coast to start"
-  # check for image? if not there buildImage first?
-  docker run -div $PWD:/$MOUNT --name $CONTAINER $IMAGE
+  if ! imageExists; then
+    echo "$IMAGE does not exist, attempting to build..."
+    buildImage
+  fi
+
+  echo "Bringing up $CONTAINER"
+  docker run --detach --interactive \
+    --volume $PWD:/$MOUNT \
+    --name $CONTAINER $IMAGE
 }
 
-function takeContainerDown {
-  echo "you want coast to stop"
+function startContainer {
+  if containerExists; then
+    echo "Starting $CONTAINER..."
+    docker start $CONTAINER
+  else
+    echo "$CONTAINER does not exist, attempting to bring up..."
+    bringContainerUp
+  fi
+}
+
+function stopContainer {
+  echo "Stopping $CONTAINER"
   docker stop $CONTAINER
-  docker rm $CONTAINER
 }
 
 function terminal {
-  echo "you want coast to term"
+  if ! containerIsRunning; then startContainer; fi
+  echo "Starting a new session in $CONTAINER"
   docker exec \
     -e COLUMNS="`tput cols`" \
     -e LINES="`tput lines`" \
@@ -49,12 +96,12 @@ case "$1" in
     destroy
     ;;
   u|up|start)
-    bringContainerUp
+    startContainer
     ;;
   d|down|stop)
-    takeContainerDown
+    stopContainer
     ;;
-  o|t|open|term|terminal)
+  o|t|open|term|terminal|session)
     terminal
     ;;
   *)
