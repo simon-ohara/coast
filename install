@@ -1,13 +1,30 @@
 #!/bin/bash
 
-# check for docker?
+# check for docker
 NAME="coast"
 SOURCE_URL="https://raw.github.com/simon-ohara/${NAME}/master/${NAME}"
-INSTALL_PATH="${HOME}/bin"
+INSTALL_PATH=$HOME/bin
+BINARY=$INSTALL_PATH/$NAME
+PLATFORM=$(uname)
+
+case $PLATFORM in
+  Darwin)
+   CONFIG=".bash_profile"
+   ;;
+  Linux)
+   CONFIG=".bashrc"
+   ;;
+ *)
+   CONFIG="config"
+   ;;
+esac
 
 mkdir $INSTALL_PATH
 # check PATH for INSTALL_PATH?
-echo "export PATH=$INSTALL_PATH:$PATH" >> $HOME/.bash_profile
-export PATH="$INSTALL_PATH:$PATH"
-wget $SOURCE_URL --directory-prefix $INSTALL_PATH
-chmod +x $INSTALL_PATH/$NAME
+if [[ ! $PATH = *"$INSTALL_PATH"* ]]; then
+  echo "Adding $INSTALL_PATH to PATH"
+  echo "export PATH=\"$INSTALL_PATH:\$PATH\"" >> $HOME/$CONFIG
+  export PATH=$INSTALL_PATH:$PATH
+fi
+wget $SOURCE_URL --output-document=$BINARY
+chmod +x $BINARY

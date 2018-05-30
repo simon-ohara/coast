@@ -134,6 +134,12 @@ function usage {
   echo "This is how to use coast"
 }
 
+function update {
+  # Check against version?
+  echo "Updating..."
+  $(wget -qO- https://raw.github.com/simon-ohara/coast/master/install | bash)
+}
+
 case "$1" in
   b|build)
     buildImage
@@ -141,7 +147,7 @@ case "$1" in
   r|remove|destroy)
     destroy $2
     ;;
-  u|up|start)
+  s|start)
     startContainer
     ;;
   d|down|stop)
@@ -150,6 +156,9 @@ case "$1" in
   o|t|open|term|terminal|session)
     shift
     startSession $@
+    ;;
+  u|update)
+    update
     ;;
   *)
     usage
