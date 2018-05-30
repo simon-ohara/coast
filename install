@@ -1,6 +1,10 @@
 #!/bin/bash
 
-# check for docker
+if [ -z $(which docker) ]; then
+  echo "Docker is not installed. Please take the time to install Docker from https://www.docker.com/ before installing coast."
+  exit 1
+fi
+
 NAME="coast"
 SOURCE_URL="https://raw.github.com/simon-ohara/${NAME}/master/${NAME}"
 INSTALL_PATH=$HOME/bin
