@@ -33,6 +33,7 @@ function containerIsRunning {
 function buildImage {
   echo "Building $IMAGE"
   docker build --tag $IMAGE $PWD
+  if [ $? -gt 0 ]; then exit 1; fi
 }
 
 function confirmDestruction {
@@ -104,16 +105,6 @@ function stopContainer {
   docker stop $CONTAINER
 }
 
-
-function startSession {
-  if ! containerIsRunning; then startContainer; fi
-  echo "Starting a new session in $CONTAINER"
-  docker exec \
-    -e COLUMNS="`tput cols`" \
-    -e LINES="`tput lines`" \
-    -it $CONTAINER /bin/zsh
-}
-
 function buildImageWith {
   if imageExists; then
     echo "$IMAGE already exists, destroy it before trying to build FROM $1"
@@ -124,16 +115,14 @@ function buildImageWith {
   docker build --tag $IMAGE - < $DOCKERFILE
 }
 
-function terminal {
-  case "$1" in
-    from)
-      buildImageWith $2
-      startSession
-      ;;
-    *)
-      startSession
-      ;;
-  esac
+function startSession {
+  if [ "$1" = "from" ]; then buildImageWith $2; fi
+  if ! containerIsRunning; then startContainer; fi
+  echo "Starting a new session in $CONTAINER"
+  docker exec \
+    -e COLUMNS="`tput cols`" \
+    -e LINES="`tput lines`" \
+    -it $CONTAINER /bin/zsh
 }
 
 function destructionUsage {
@@ -159,7 +148,7 @@ case "$1" in
     ;;
   o|t|open|term|terminal|session)
     shift
-    terminal $@
+    startSession $@
     ;;
   *)
     usage
