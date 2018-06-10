@@ -1,0 +1,23 @@
+#!/bin/bash
+
+echo "Docker stub called with $@" >&4
+
+case "$1" in
+  ps)
+    case "$2" in
+      --quiet)
+        [ $CONTAINER_RUNNING -gt 0 ] && \
+          echo "container-running"
+        ;;
+      --all)
+        [ $CONTAINER_EXISTS -gt 0 ] && \
+          echo "container-exists"
+        ;;
+    esac
+    ;;
+
+  images)
+    [ $IMAGE_EXISTS -gt 0 ] && \
+      echo "image-exists"
+    ;;
+esac

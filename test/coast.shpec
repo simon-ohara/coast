@@ -1,0 +1,85 @@
+#!/bin/bash
+
+TEST=$(readlink -f $1)
+TEST_PATH=$(dirname $TEST)
+TEST_ROOT=$(cd $TEST_PATH/..; pwd)
+
+. $TEST_ROOT/test/.before
+
+describe "coast"
+  describe "with no arguments"
+    run coast
+    it "does not error"; assert equal $status 0; end
+    it "will output the usage text"; assert equal "$output" "$USAGE"; end
+  end
+
+  describe "with unknown arguments"
+    run coast unknown arguments
+    it "does not error"; assert equal $status 0; end
+    it "will output the usage text"; assert equal "$output" "$USAGE"; end
+  end
+
+
+
+
+  describe "#build"
+    run coast build
+    it "does not error"; assert equal $status 0; end
+    it "builds a docker image"
+      assert equal "$output" "Building $IMAGE"
+      assert glob "$captured" "*build\ --tag\ $IMAGE\ /coast*"
+    end
+    it "fails if docker build fails"
+      DOCKER_EXIT=1
+      run coast build
+      assert equal $status 1
+      DOCKER_EXIT=0
+    end
+  end
+
+
+
+
+  describe "#destroy"
+    run coast destroy < $CONFIRM
+    it "does not error"; assert equal $status 0; end
+    it "asks the user to confirm the operation"
+      assert equal "$output" "Are you sure you want to destroy $IMAGE and $CONTAINER? [(y)|n]:"
+    end
+
+    describe "when the container is already running"
+      IMAGE_EXISTS=1
+      CONTAINER_EXISTS=1
+      CONTAINER_RUNNING=1
+
+      run coast destroy < $CONFIRM
+
+      it "does not error"; assert equal $status 0; end
+      it "checks if the container is running"
+        assert glob "$captured" "*ps\ --quiet\ --filter\ name=$CONTAINER\ --filter\ status=running*"
+      end
+      it "stops the container"
+        assert glob "$output" "*Stopping\ $CONTAINER*"
+        assert glob "$captured" "*stop\ $CONTAINER*"
+      end
+      it "checks if the container exists"
+        assert glob "$captured" "*ps\ --all\ --quiet\ --filter\ name=$CONTAINER*"
+      end
+      it "removes the container"
+        assert glob "$output" "*Removing\ $CONTAINER*"
+        assert glob "$captured" "*rm\ $CONTAINER*"
+      end
+      it "checks if the image exists"
+        assert glob "$captured" "*images\ --quiet\ $IMAGE*"
+      end
+      it "removes the image"
+        assert glob "$output" "*Removing\ $IMAGE*"
+        assert glob "$captured" "*rmi\ $IMAGE*"
+      end
+
+      IMAGE_EXISTS=0
+      CONTAINER_EXISTS=0
+      CONTAINER_RUNNING=0
+    end
+  end
+end

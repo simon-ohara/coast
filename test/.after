@@ -1,2 +1,3 @@
 exec 4>&-
 rm $DATA
+echo CLOSED

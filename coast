@@ -8,35 +8,35 @@ CONTAINER="${NAME}-container"
 IMAGE="${NAME}-image"
 MOUNT=/$NAME
 
-function checkForOutput {
+checkForOutput() {
   if [ -z $1 ]; then return 1; fi
   return 0
 }
 
-function imageExists {
+imageExists() {
   checkForOutput $(docker images --quiet $IMAGE)
   return $?
 }
 
-function containerExists {
+containerExists() {
   checkForOutput $(docker ps --all --quiet --filter "name=$CONTAINER")
   return $?
 }
 
-function containerIsRunning {
+containerIsRunning() {
   checkForOutput $(docker ps --quiet \
     --filter "name=$CONTAINER" \
     --filter "status=running")
   return $?
 }
 
-function buildImage {
+buildImage() {
   echo "Building $IMAGE"
   docker build --tag $IMAGE $PWD
   if [ $? -gt 0 ]; then exit 1; fi
 }
 
-function confirmDestruction {
+confirmDestruction() {
   echo -n "Are you sure you want to destroy $IMAGE and $CONTAINER? [(y)|n]:"
   read confirmation
   case "$confirmation" in
@@ -50,7 +50,7 @@ function confirmDestruction {
   esac
 }
 
-function destroy {
+destroy() {
   case "$1" in
     -f|--force)
       performDestruction
@@ -64,7 +64,7 @@ function destroy {
   esac
 }
 
-function performDestruction {
+performDestruction() {
   if containerIsRunning; then stopContainer; fi
 
   if containerExists; then
@@ -78,7 +78,7 @@ function performDestruction {
   fi
 }
 
-function bringContainerUp {
+bringContainerUp() {
   if ! imageExists; then
     echo "$IMAGE does not exist, attempting to build..."
     buildImage
@@ -90,7 +90,7 @@ function bringContainerUp {
     --name $CONTAINER $IMAGE
 }
 
-function startContainer {
+startContainer() {
   if containerExists; then
     echo "Starting $CONTAINER..."
     docker start $CONTAINER
@@ -100,12 +100,12 @@ function startContainer {
   fi
 }
 
-function stopContainer {
+stopContainer() {
   echo "Stopping $CONTAINER"
   docker stop $CONTAINER
 }
 
-function buildImageWith {
+buildImageWith() {
   if imageExists; then
     echo "$IMAGE already exists, destroy it before trying to build FROM $1"
     exit 1
@@ -115,7 +115,7 @@ function buildImageWith {
   docker build --tag $IMAGE - < $DOCKERFILE
 }
 
-function startSession {
+startSession() {
   if [ "$1" = "from" ]; then buildImageWith $2; fi
   if ! containerIsRunning; then startContainer; fi
   echo "Starting a new session in $CONTAINER"
@@ -126,15 +126,15 @@ function startSession {
     $CONTAINER /bin/zsh
 }
 
-function destructionUsage {
+destructionUsage() {
   echo "This is how to use coast destroy"
 }
 
-function usage {
+usage() {
   echo "This is how to use coast"
 }
 
-function update {
+update() {
   # Check against version?
   echo "Updating..."
   wget -qO- https://raw.github.com/simon-ohara/coast/master/install | bash

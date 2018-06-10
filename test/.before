@@ -1,1 +1,42 @@
-exec 4<> $DATA
+#!/bin/sh
+
+DATA=/tmp/data
+CONTAINER=coast-container
+IMAGE=coast-image
+DOCKER_EXIT=0
+CONTAINER_RUNNING=0
+CONTAINER_EXISTS=0
+IMAGE_EXISTS=0
+
+USAGE="This is how to use coast"
+CONFIRM=$TEST_ROOT/test/.confirm
+
+docker() { . $TEST_ROOT/test/.docker; return $DOCKER_EXIT; }
+coast() { . $TEST_ROOT/coast; }
+setup() { . $TEST_ROOT/test/.before; }
+teardown() { . $TEST_ROOT/test/.after; }
+run() {
+  exec 4> $DATA
+  output="$("$@" 2>&1)"
+  status="$?"
+  exec 4>&-
+  capture
+}
+
+capture() {
+  exec 4< $DATA
+  unset captured
+  done=0
+  while [ $done -eq 0 ]; do
+    read -r <&4 myline
+    if [ $? != 0 ]; then
+      done=1
+      exec 4<&-
+      rm $DATA
+      continue
+    fi
+    captured="$captured $myline"
+  done
+}
+
+echo "\n\n"
