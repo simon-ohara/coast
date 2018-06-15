@@ -16,6 +16,8 @@ For any specific customisations on top of this, like installing `node` or `nginx
 
 If a Dockerfile is included in the root of the project it is possible to just run `coast session` and the Dockerfile will be used as the base to create and run the container.
 
+After running `coast session from <docker-iamge>` initially it will throw an error when used subsquently informing that `coast destroy` should be used before trying to create a new image for the current repo. However, simply running `coast session` with no arguments will start the session in the existing container.
+
 ## Installation
 
 Coast is dependant on the host system running Docker and will throw errors if it is used without it. If using the install script then it will also fail if Docker is not installed.
