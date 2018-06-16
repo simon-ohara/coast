@@ -23,6 +23,6 @@ After running `coast session from <docker-iamge>` initially it will throw an err
 Coast is dependant on the host system running Docker and will throw errors if it is used without it. If using the install script then it will also fail if Docker is not installed.
 
 ```
-wget -qO- https://raw.github.com/simon-ohara/coast/master/install | bash
+wget -qO- https://raw.github.com/simon-ohara/coast/master/bin/install | bash
 ```
 

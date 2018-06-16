@@ -118,7 +118,7 @@ buildImageWith() {
 startSession() {
   if [ "$1" = "from" ]; then buildImageWith $2; fi
   if ! containerIsRunning; then startContainer; fi
-  echo "Starting a new session in $CONTAINER"
+  echo "Starting a new session on $CONTAINER"
   docker exec --interactive --tty \
     --env COLUMNS="`tput cols`" \
     --env LINES="`tput lines`" \
