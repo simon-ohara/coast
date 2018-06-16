@@ -21,7 +21,6 @@ describe "coast"
 
 
 
-
   describe "#build"
     run coast build
     it "does not error"; assert equal $status 0; end
@@ -39,47 +38,203 @@ describe "coast"
 
 
 
-
   describe "#destroy"
     run coast destroy < $CONFIRM
     it "does not error"; assert equal $status 0; end
     it "asks the user to confirm the operation"
       assert equal "$output" "Are you sure you want to destroy $IMAGE and $CONTAINER? [(y)|n]:"
     end
+    it "checks if the container is running"
+      assert glob "$captured" "*ps\ --quiet\ --filter\ name=$CONTAINER\ --filter\ status=running*"
+    end
+    it "checks if the container exists"
+      assert glob "$captured" "*ps\ --all\ --quiet\ --filter\ name=$CONTAINER*"
+    end
+    it "lastly checks if the image exists"
+      assert glob "$captured" "*images\ --quiet\ $IMAGE"
+    end
 
-    describe "when the container is already running"
-      IMAGE_EXISTS=1
-      CONTAINER_EXISTS=1
+    describe "when the container is running"
       CONTAINER_RUNNING=1
-
       run coast destroy < $CONFIRM
-
       it "does not error"; assert equal $status 0; end
-      it "checks if the container is running"
-        assert glob "$captured" "*ps\ --quiet\ --filter\ name=$CONTAINER\ --filter\ status=running*"
-      end
       it "stops the container"
-        assert glob "$output" "*Stopping\ $CONTAINER*"
+        assert glob "$output" "*Stopping\ $CONTAINER"
         assert glob "$captured" "*stop\ $CONTAINER*"
       end
-      it "checks if the container exists"
-        assert glob "$captured" "*ps\ --all\ --quiet\ --filter\ name=$CONTAINER*"
-      end
-      it "removes the container"
-        assert glob "$output" "*Removing\ $CONTAINER*"
-        assert glob "$captured" "*rm\ $CONTAINER*"
-      end
-      it "checks if the image exists"
-        assert glob "$captured" "*images\ --quiet\ $IMAGE*"
-      end
-      it "removes the image"
-        assert glob "$output" "*Removing\ $IMAGE*"
-        assert glob "$captured" "*rmi\ $IMAGE*"
-      end
-
-      IMAGE_EXISTS=0
-      CONTAINER_EXISTS=0
       CONTAINER_RUNNING=0
     end
+
+    describe "when the container is not running"
+      run coast destroy < $CONFIRM
+      it "does not try to stop the container"
+        assert no_glob "$output" "*Stopping\ $CONTAINER*"
+        assert no_glob "$captured" "*stop\ $CONTAINER*"
+      end
+    end
+
+    describe "when the container exists"
+      CONTAINER_EXISTS=1
+      run coast destroy < $CONFIRM
+      it "does not error"; assert equal $status 0; end
+      it "removes the container"
+        assert glob "$output" "*Removing\ $CONTAINER"
+        assert glob "$captured" "*rm\ $CONTAINER*"
+      end
+      CONTAINER_EXISTS=0
+    end
+
+    describe "when the container does not exist"
+      run coast destroy < $CONFIRM
+      it "does not try to remove the container"
+        assert no_glob "$output" "*Removing\ $CONTAINER*"
+        assert no_glob "$captured" "*rm\ $CONTAINER*"
+      end
+    end
+
+    describe "when the image exists"
+      IMAGE_EXISTS=1
+      run coast destroy < $CONFIRM
+      it "does not error"; assert equal $status 0; end
+      it "removes the image"
+        assert glob "$output" "*Removing\ $IMAGE"
+        assert glob "$captured" "*rmi\ $IMAGE"
+      end
+      IMAGE_EXISTS=0
+    end
+
+    describe "when the image does not exist"
+      run coast destroy < $CONFIRM
+      it "does not try to remove the image"
+        assert no_glob "$output" "*Removing\ $IMAGE"
+        assert no_glob "$captured" "*rmi\ $IMAGE"
+      end
+    end
+  end
+
+
+
+  describe "#start"
+    run coast start
+    it "does not error"; assert equal $status 0; end
+    it "checks if the container exists"
+      assert glob "$captured" "*ps\ --all\ --quiet\ --filter\ name=$CONTAINER*"
+    end
+
+    describe "when the container exists"
+      CONTAINER_EXISTS=1
+      run coast start
+      it "does not error"; assert equal $status 0; end
+      it "starts the container"
+        assert equal "$output" "Starting $CONTAINER..."
+        assert glob "$captured" "*start\ $CONTAINER"
+      end
+      CONTAINER_EXISTS=0
+    end
+
+    describe "when the container does not exist"
+      run coast start
+      it "checks if the image exists"
+        assert glob "$output" "$CONTAINER\ does\ not\ exist,\ attempting\ to\ bring\ up...*"
+        assert glob "$captured" "*images\ --quiet\ $IMAGE*"
+      end
+      it "brings up the container"
+        assert glob "$output" "*Bringing\ up\ $CONTAINER*"
+        assert glob "$captured" "*run\ --detach\ --interactive\ --volume\ $PWD:/coast\ --name\ $CONTAINER\ $IMAGE"
+      end
+
+      describe "when the image exists"
+        IMAGE_EXISTS=1
+        run coast start
+        it "does not error"; assert equal $status 0; end
+        it "does not try to build the image"
+          assert no_glob "$output" "*Building\ $IMAGE*"
+          assert no_glob "$captured" "*build\ --tag\ $IMAGE\ $PWD*"
+        end
+        IMAGE_EXISTS=0
+      end
+
+      describe "when the image does not exist"
+        run coast start
+        it "builds the image"
+          assert glob "$output" "*Building\ $IMAGE*"
+          assert glob "$captured" "*build\ --tag\ $IMAGE\ $PWD*"
+        end
+      end
+    end
+  end
+
+
+
+  describe "#stop"
+    run coast stop
+    it "does not error"; assert equal $status 0; end
+    it "stops the container"
+      assert equal "$output" "Stopping $CONTAINER"
+      assert glob "$captured" "*stop\ $CONTAINER"
+    end
+  end
+
+
+
+  describe "#session"
+    run coast session
+    it "does not error"; assert equal $status 0; end
+    it "checks if the container is running"
+      assert glob "$captured" "*ps\ --quiet\ --filter\ name=$CONTAINER\ --filter\ status=running*"
+    end
+
+    describe "when the container is running"
+      CONTAINER_RUNNING=1
+      run coast session
+      it "does not error"; assert equal $status 0; end
+      it "starts a new interactive zsh session on the container"
+        assert equal "$output" "Starting a new session on $CONTAINER"
+        assert glob "$captured" "*exec\ --interactive\ --tty\ --env\ COLUMNS=`tput cols`\ --env\ LINES=`tput lines`\ --workdir\ /coast\ $CONTAINER\ /bin/zsh"
+      end
+      CONTAINER_RUNNING=0
+    end
+
+    describe "when the container is not running"
+      CONTAINER_EXISTS=1
+      run coast session
+      it "does not error"; assert equal $status 0; end
+      it "checks if the container exists"
+        assert glob "$captured" "*ps\ --all\ --quiet\ --filter\ \"name=$CONTAINER\"*"
+      end
+      it "starts the container"
+        assert glob "$output" "Starting\ $CONTAINER...*"
+        assert glob "$captured" "*start\ $CONTAINER*"
+      end
+      CONTAINER_EXISTS=0
+    end
+  end
+
+
+
+  describe "session from <image-name>"
+    CONTAINER_RUNNING=1
+    run coast session from foo-image
+    it "checks that the image exists"
+      assert glob "$captured" "*images\ --quiet\ $IMAGE*"
+    end
+
+    describe "when the image exists"
+      IMAGE_EXISTS=1
+      run coast session from foo-image
+      it "fails with an error"
+        assert equal "$status" 1
+        assert equal "$output" "$IMAGE already exists, destroy it before trying to build FROM foo-image"
+      end
+      IMAGE_EXISTS=0
+    end
+
+    describe "when the image does not exist"
+      run coast session from foo-image
+      it "builds the image"
+        assert glob "$captured" "*build\ --tag\ $IMAGE\ -*"
+      end
+    end
+    CONTAINER_RUNNING=0
   end
 end

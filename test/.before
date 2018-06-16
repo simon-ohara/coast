@@ -12,7 +12,7 @@ USAGE="This is how to use coast"
 CONFIRM=$TEST_ROOT/test/.confirm
 
 docker() { . $TEST_ROOT/test/.docker; return $DOCKER_EXIT; }
-coast() { . $TEST_ROOT/coast; }
+coast() { . $TEST_ROOT/bin/coast; }
 setup() { . $TEST_ROOT/test/.before; }
 teardown() { . $TEST_ROOT/test/.after; }
 run() {
