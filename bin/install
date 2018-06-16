@@ -6,7 +6,7 @@ if [ -z $(which docker) ]; then
 fi
 
 NAME="coast"
-SOURCE_URL="https://raw.github.com/simon-ohara/${NAME}/master/bin/${NAME}"
+SOURCE_URL="https://raw.github.com/simon-ohara/${NAME}/master/lib/${NAME}"
 INSTALL_PATH=$HOME/bin
 BINARY=$INSTALL_PATH/$NAME
 PLATFORM=$(uname)
